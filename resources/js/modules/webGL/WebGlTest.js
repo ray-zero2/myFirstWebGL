@@ -2,8 +2,8 @@ import MatIV from './matrix/MatIV';
 import VertexShader from './shaders/VertexShader.vert';
 import FragmentShader from './shaders/FragmentShader.frag';
 
-export default function() {
-  const canvas = document.querySelector('.canvas');
+export default function(selector) {
+  const canvas = document.querySelector(selector);
   canvas.width = 300;
   canvas.height = 300;
 
