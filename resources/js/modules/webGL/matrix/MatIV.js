@@ -4,11 +4,14 @@
 // Copyright (c) doxas
 // ------------------------------------------------------------------------------------------------
 
-export default function() {
-  this.create = function() {
+export default class {
+  constructor() { }
+
+  create() {
     return new Float32Array(16);
-  };
-  this.identity = function(dest) {
+  }
+
+  identity(dest) {
     dest[0] = 1;
     dest[1] = 0;
     dest[2] = 0;
@@ -26,8 +29,9 @@ export default function() {
     dest[14] = 0;
     dest[15] = 1;
     return dest;
-  };
-  this.multiply = function(mat1, mat2, dest) {
+  }
+
+  multiply(mat1, mat2, dest) {
     var a = mat1[0],
       b = mat1[1],
       c = mat1[2],
@@ -77,8 +81,9 @@ export default function() {
     dest[14] = M * c + N * g + O * k + P * o;
     dest[15] = M * d + N * h + O * l + P * p;
     return dest;
-  };
-  this.scale = function(mat, vec, dest) {
+  }
+
+  scale(mat, vec, dest) {
     dest[0] = mat[0] * vec[0];
     dest[1] = mat[1] * vec[0];
     dest[2] = mat[2] * vec[0];
@@ -96,8 +101,9 @@ export default function() {
     dest[14] = mat[14];
     dest[15] = mat[15];
     return dest;
-  };
-  this.translate = function(mat, vec, dest) {
+  }
+
+  translate(mat, vec, dest) {
     dest[0] = mat[0];
     dest[1] = mat[1];
     dest[2] = mat[2];
@@ -115,8 +121,9 @@ export default function() {
     dest[14] = mat[2] * vec[0] + mat[6] * vec[1] + mat[10] * vec[2] + mat[14];
     dest[15] = mat[3] * vec[0] + mat[7] * vec[1] + mat[11] * vec[2] + mat[15];
     return dest;
-  };
-  this.rotate = function(mat, angle, axis, dest) {
+  }
+
+  rotate(mat, angle, axis, dest) {
     var sq = Math.sqrt(
       axis[0] * axis[0] + axis[1] * axis[1] + axis[2] * axis[2]
     );
@@ -179,8 +186,9 @@ export default function() {
     dest[10] = i * y + m * z + q * A;
     dest[11] = j * y + n * z + r * A;
     return dest;
-  };
-  this.lookAt = function(eye, center, up, dest) {
+  }
+
+  lookAt(eye, center, up, dest) {
     var eyeX = eye[0],
       eyeY = eye[1],
       eyeZ = eye[2],
@@ -246,8 +254,9 @@ export default function() {
     dest[14] = -(z0 * eyeX + z1 * eyeY + z2 * eyeZ);
     dest[15] = 1;
     return dest;
-  };
-  this.perspective = function(fovy, aspect, near, far, dest) {
+  }
+
+  perspective(fovy, aspect, near, far, dest) {
     var t = near * Math.tan((fovy * Math.PI) / 360);
     var r = t * aspect;
     var a = r * 2,
@@ -270,8 +279,9 @@ export default function() {
     dest[14] = -(far * near * 2) / c;
     dest[15] = 0;
     return dest;
-  };
-  this.transpose = function(mat, dest) {
+  }
+
+  transpose(mat, dest) {
     dest[0] = mat[0];
     dest[1] = mat[4];
     dest[2] = mat[8];
@@ -289,8 +299,9 @@ export default function() {
     dest[14] = mat[11];
     dest[15] = mat[15];
     return dest;
-  };
-  this.inverse = function(mat, dest) {
+  }
+
+  inverse(mat, dest) {
     var a = mat[0],
       b = mat[1],
       c = mat[2],
@@ -337,5 +348,5 @@ export default function() {
     dest[14] = (-m * t + n * r - o * q) * ivd;
     dest[15] = (i * t - j * r + k * q) * ivd;
     return dest;
-  };
+  }
 }
