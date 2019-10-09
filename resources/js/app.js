@@ -1,3 +1,5 @@
-import WebGlTest from './modules/webGL/WebGlTest';
+// import WebGlTest from './modules/webGL/WebGlTest';
+import DistortionEffect from './modules/webGL/DistortionEffect';
 
-WebGlTest('.canvas');
+// WebGlTest('.canvas');
+DistortionEffect('.canvas');

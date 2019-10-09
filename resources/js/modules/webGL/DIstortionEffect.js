@@ -1,6 +1,5 @@
-import MatIV from './matrix/MatIV';
-import VertexShader from './shaders/VertexShader.vert';
-import FragmentShader from './shaders/FragmentShader.frag';
+import VertexShader from './shaders/distortion/VertexShader.vert';
+import FragmentShader from './shaders/distortion/FragmentShader.frag';
 
 export default function(selector) {
   const canvas = document.querySelector(selector);
@@ -81,32 +80,23 @@ export default function(selector) {
   const ibo = create_ibo(index);
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
 
-  const uniLocation = new Array(3);
-  uniLocation[0] = gl.getUniformLocation(program, 'mvpMatrix');
-  uniLocation[1] = gl.getUniformLocation(program, 'texture0');
-  uniLocation[2] = gl.getUniformLocation(program, 'texture1');
-
-  /***********matrix********** */
-  const m = new MatIV();
-  const mMatrix = m.identity(m.create());
-  const vMatrix = m.identity(m.create());
-  const pMatrix = m.identity(m.create());
-  const tmpMatrix = m.identity(m.create());
-  const mvpMatrix = m.identity(m.create());
-
-  // ビュー×プロジェクション座標変換行列
-  m.lookAt([1.0, 2.0, 3.0], [0, 0, 0], [0, 1, 0], vMatrix);
-  m.perspective(45, canvas.width / canvas.height, 0.1, 100, pMatrix);
-  m.multiply(pMatrix, vMatrix, tmpMatrix);
+  const uniLocation = new Array(4);
+  uniLocation[0] = gl.getUniformLocation(program, 'texture0');
+  uniLocation[1] = gl.getUniformLocation(program, 'texture1');
+  uniLocation[2] = gl.getUniformLocation(program, 'dispTexture');
+  uniLocation[3] = gl.getUniformLocation(program, 'ratio');
 
   // 深度テストを有効にする
   gl.enable(gl.DEPTH_TEST);
   gl.depthFunc(gl.LEQUAL);
 
   let texture0 = null,
-    texture1 = null;
+    texture1 = null,
+    dispTexture = null;
+
   create_texture('/public/images/water.jpg', 0);
   create_texture('/public/images/water2.jpg', 1);
+  create_texture('/public/images/disp.jpg', 2);
 
   let count = 0;
   loop();
@@ -116,28 +106,26 @@ export default function(selector) {
     gl.clearDepth(1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    count += 2;
-
-    const radius = ((count % 360) * Math.PI) / 180;
-
+    const mixRatio = Math.abs(Math.sin(count));
+    gl.uniform1f(uniLocation[3], mixRatio);
     // テクスチャユニットを指定してバインドし登録する
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, texture0);
-    gl.uniform1i(uniLocation[1], 0);
+    gl.uniform1i(uniLocation[0], 0);
 
     // テクスチャユニットを指定してバインドし登録する
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, texture1);
-    gl.uniform1i(uniLocation[2], 1);
+    gl.uniform1i(uniLocation[1], 1);
 
-    m.identity(mMatrix);
-    m.rotate(mMatrix, radius, [0, 1, 0], mMatrix); //y軸回転
-    m.multiply(tmpMatrix, mMatrix, mvpMatrix);
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, dispTexture);
+    gl.uniform1i(uniLocation[2], 2);
 
-    gl.uniformMatrix4fv(uniLocation[0], false, mvpMatrix);
     gl.drawElements(gl.TRIANGLES, index.length, gl.UNSIGNED_SHORT, 0);
 
     gl.flush();
+    count += 0.005;
     requestAnimationFrame(loop);
   }
 
@@ -228,6 +216,9 @@ export default function(selector) {
           break;
         case 1:
           texture1 = _texture;
+          break;
+        case 2:
+          dispTexture = _texture;
           break;
         default:
           break;
