@@ -32,11 +32,6 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.(glsl|vs|fs|vert|frag)$/,
-        exclude: /node_modules/,
-        use: ['raw-loader']
-      },
-      {
         test: /\.js$/,
         exclude: /node_modules/,
         use: [
@@ -60,6 +55,11 @@ module.exports = {
             }
           }
         ]
+      },
+      {
+        test: /\.(glsl|vs|fs|vert|frag)$/,
+        exclude: /node_modules/,
+        use: 'raw-loader'
       }
     ]
   },
