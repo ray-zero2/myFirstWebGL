@@ -1,5 +1,6 @@
 import VertexShader from './shaders/distortion/VertexShader.vert';
 import FragmentShader from './shaders/distortion/FragmentShader.frag';
+import anime from 'animejs';
 
 export default function(selector) {
   const canvas = document.querySelector(selector);
@@ -94,11 +95,15 @@ export default function(selector) {
     texture1 = null,
     dispTexture = null;
 
-  create_texture('/public/images/water.jpg', 0);
-  create_texture('/public/images/water2.jpg', 1);
-  create_texture('/public/images/disp.jpg', 2);
+  create_texture('/public/images/image1.jpg', 0);
+  create_texture('/public/images/water.jpg', 1);
+  create_texture('/public/images/disp2.jpg', 2);
 
   let count = 0;
+  const object = {
+    translate: 0
+  };
+
   loop();
 
   function loop() {
@@ -106,8 +111,8 @@ export default function(selector) {
     gl.clearDepth(1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    const mixRatio = Math.abs(Math.sin(count));
-    gl.uniform1f(uniLocation[3], mixRatio);
+    // const mixRatio = Math.sin(count) / 2 + 0.5;
+    gl.uniform1f(uniLocation[3], object.translate);
     // テクスチャユニットを指定してバインドし登録する
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, texture0);
@@ -125,7 +130,8 @@ export default function(selector) {
     gl.drawElements(gl.TRIANGLES, index.length, gl.UNSIGNED_SHORT, 0);
 
     gl.flush();
-    count += 0.005;
+    count += 0.05;
+    console.log(object.translate);
     requestAnimationFrame(loop);
   }
 
@@ -227,4 +233,24 @@ export default function(selector) {
 
     img.src = source;
   }
+
+  canvas.addEventListener('mouseenter', () => {
+    // anime.remove(object);
+    anime({
+      targets: object,
+      translate: 1.0,
+      easing: 'easeInOutQuint',
+      duration: 800
+    });
+  });
+
+  canvas.addEventListener('mouseleave', () => {
+    // anime.remove(object);
+    anime({
+      targets: object,
+      translate: 0,
+      easing: 'easeInOutQuint',
+      duration: 800
+    });
+  });
 }

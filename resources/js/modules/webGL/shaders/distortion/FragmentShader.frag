@@ -7,10 +7,11 @@ varying vec4      vColor;
 varying vec2      vTextureCoord;
 
 void main(void){
-    vec4 smpColor0 = texture2D(texture0, vTextureCoord);
-    vec4 smpColor1 = texture2D(texture1, vTextureCoord);
-    vec4 dispTexture = texture2D(texture1, vTextureCoord);
-
-    float otherRatio = 1.0 - ratio;
-    gl_FragColor  =(smpColor0*ratio + smpColor1*otherRatio);
+    vec4 disp = texture2D(dispTexture, vTextureCoord*2.0);
+    vec2 calcPosition2 = vTextureCoord + vec2(disp.r,disp.g) *(1.0 - ratio);
+    vec2 calcPosition1 = vTextureCoord + vec2(disp.g,disp.b) *ratio;
+    vec4 image1 = texture2D(texture0, calcPosition1);
+    vec4 image2 = texture2D(texture1, calcPosition2);
+    vec4 dist = mix(image1, image2, ratio);
+    gl_FragColor = dist;
 }
