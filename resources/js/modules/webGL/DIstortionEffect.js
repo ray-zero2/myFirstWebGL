@@ -95,9 +95,9 @@ export default function(selector) {
     texture1 = null,
     dispTexture = null;
 
-  create_texture('../images/image1.jpg', 0);
-  create_texture('../images/image2.jpg', 1);
-  create_texture('../images/disp2.jpg', 2);
+  create_texture('./images/image1.jpg', 0);
+  create_texture('./images/image2.jpg', 1);
+  create_texture('./images/disp2.jpg', 2);
 
   let count = 0;
   const object = {
