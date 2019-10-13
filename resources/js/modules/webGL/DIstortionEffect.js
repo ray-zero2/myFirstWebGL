@@ -2,7 +2,7 @@ import VertexShader from './shaders/distortion/VertexShader.vert';
 import FragmentShader from './shaders/distortion/FragmentShader.frag';
 import anime from 'animejs';
 
-export default function (selector) {
+export default function(selector) {
   const canvas = document.querySelector(selector);
   canvas.width = 300;
   canvas.height = 300;
@@ -95,9 +95,9 @@ export default function (selector) {
     texture1 = null,
     dispTexture = null;
 
-  create_texture('/images/image1.jpg', 0);
-  create_texture('/images/image2.jpg', 1);
-  create_texture('/images/disp2.jpg', 2);
+  create_texture('../images/image1.jpg', 0);
+  create_texture('../images/image2.jpg', 1);
+  create_texture('../images/disp2.jpg', 2);
 
   let count = 0;
   const object = {
@@ -210,7 +210,7 @@ export default function (selector) {
   function create_texture(source, number) {
     const img = new Image();
 
-    img.onload = function () {
+    img.onload = function() {
       const _texture = gl.createTexture();
       gl.bindTexture(gl.TEXTURE_2D, _texture);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
