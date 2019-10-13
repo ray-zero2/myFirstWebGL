@@ -97,9 +97,8 @@ export default function(selector) {
 
   create_texture('./images/image1.jpg', 0);
   create_texture('./images/image2.jpg', 1);
-  create_texture('./images/disp2.jpg', 2);
+  create_texture('./images/disp.jpg', 2);
 
-  let count = 0;
   const object = {
     translate: 0
   };
@@ -130,8 +129,7 @@ export default function(selector) {
     gl.drawElements(gl.TRIANGLES, index.length, gl.UNSIGNED_SHORT, 0);
 
     gl.flush();
-    count += 0.05;
-    console.log(object.translate);
+    // console.log(object.translate);
     requestAnimationFrame(loop);
   }
 
