@@ -1,239 +1,151 @@
-import MatIV from './matrix/MatIV';
-import VertexShader from './shaders/VertexShader.vert';
-import FragmentShader from './shaders/FragmentShader.frag';
+import VertexShader from './shaders/distortion/VertexShader.vert';
+import FragmentShader from './shaders/distortion/FragmentShader.frag';
+import vertices from './vertices';
 
-export default function(selector) {
-  const canvas = document.querySelector(selector);
-  canvas.width = 300;
-  canvas.height = 300;
+import anime from 'animejs';
 
-  const gl = canvas.getContext('webgl');
-  // canvasを初期化する色を設定する
-  gl.clearColor(0.0, 0.0, 0.0, 1.0);
+export default class {
+  constructor(selector) {
+    const canvas = document.querySelector(selector);
+    canvas.width = 500;
+    canvas.height = 500;
 
-  // canvasを初期化する際の深度を設定する
-  gl.clearDepth(1.0);
+    this.isOldBrowser = /msie|trident/.test(navigator.userAgent.toLowerCase);
+    this.images = ['./images/image1.jpg'];
+    this.program = null;
+    this.vertices = new Float32Array(vertices);
 
-  // canvasを初期化
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-  //shaderの作成
-  const vSource = VertexShader;
-  const fSource = FragmentShader;
-  const vShader = create_vertexShader(vSource);
-  const fShader = create_fragmentShader(fSource);
-  const program = create_program(vShader, fShader);
-
-  const attLocation = new Array(3);
-  attLocation[0] = gl.getAttribLocation(program, 'position');
-  attLocation[1] = gl.getAttribLocation(program, 'color');
-  attLocation[2] = gl.getAttribLocation(program, 'textureCoord');
-
-  const attStride = new Array(3);
-  attStride[0] = 3;
-  attStride[1] = 4;
-  attStride[2] = 2;
-
-  const position = [
-    -1.0,
-    1.0,
-    0.0, //0
-    1.0,
-    1.0,
-    0.0, //1
-    -1.0,
-    -1.0,
-    0.0, //2
-    1.0,
-    -1.0,
-    0.0 //3
-  ];
-
-  const color = [
-    1.0,
-    1.0,
-    1.0,
-    1.0,
-    1.0,
-    1.0,
-    1.0,
-    1.0,
-    1.0,
-    1.0,
-    1.0,
-    1.0,
-    1.0,
-    1.0,
-    1.0,
-    1.0
-  ];
-
-  const textureCoord = [0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0];
-
-  const index = [0, 1, 2, 3, 2, 1];
-
-  const position_vbo = create_vbo(position);
-  const color_vbo = create_vbo(color);
-  const texture_vbo = create_vbo(textureCoord);
-
-  const vboList = [position_vbo, color_vbo, texture_vbo];
-  set_attribute(vboList, attLocation, attStride);
-
-  const ibo = create_ibo(index);
-  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
-
-  const uniLocation = new Array(3);
-  uniLocation[0] = gl.getUniformLocation(program, 'mvpMatrix');
-  uniLocation[1] = gl.getUniformLocation(program, 'texture0');
-  uniLocation[2] = gl.getUniformLocation(program, 'texture1');
-
-  /***********matrix********** */
-  const m = new MatIV();
-  const mMatrix = m.identity(m.create());
-  const vMatrix = m.identity(m.create());
-  const pMatrix = m.identity(m.create());
-  const tmpMatrix = m.identity(m.create());
-  const mvpMatrix = m.identity(m.create());
-
-  // ビュー×プロジェクション座標変換行列
-  m.lookAt([1.0, 2.0, 3.0], [0, 0, 0], [0, 1, 0], vMatrix);
-  m.perspective(45, canvas.width / canvas.height, 0.1, 100, pMatrix);
-  m.multiply(pMatrix, vMatrix, tmpMatrix);
-
-  // 深度テストを有効にする
-  gl.enable(gl.DEPTH_TEST);
-  gl.depthFunc(gl.LEQUAL);
-
-  let texture0 = null,
-    texture1 = null;
-  create_texture('/public/images/water.jpg', 0);
-  create_texture('/public/images/water2.jpg', 1);
-
-  let count = 0;
-  loop();
-
-  function loop() {
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    gl.clearDepth(1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-    count += 2;
-
-    const radius = ((count % 360) * Math.PI) / 180;
-
-    // テクスチャユニットを指定してバインドし登録する
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, texture0);
-    gl.uniform1i(uniLocation[1], 0);
-
-    // テクスチャユニットを指定してバインドし登録する
-    gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, texture1);
-    gl.uniform1i(uniLocation[2], 1);
-
-    m.identity(mMatrix);
-    m.rotate(mMatrix, radius, [0, 1, 0], mMatrix); //y軸回転
-    m.multiply(tmpMatrix, mMatrix, mvpMatrix);
-
-    gl.uniformMatrix4fv(uniLocation[0], false, mvpMatrix);
-    gl.drawElements(gl.TRIANGLES, index.length, gl.UNSIGNED_SHORT, 0);
-
-    gl.flush();
-    requestAnimationFrame(loop);
+    if (this.isOldBrowser === false) {
+      this.gl = canvas.getContext('webgl');
+      this.imageLoader(this.start());
+    }
   }
 
-  /**************************************** */
-  /*************  functions  ************* */
-  /**************************************** */
+  initializeGL() {
+    this.gl.clearColor(0.0, 0.0, 0.0, 0.2);
+    this.gl.clearDepth(1.0);
+    this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+    this.setShaders();
+  }
 
-  function create_vertexShader(source) {
-    const shader = gl.createShader(gl.VERTEX_SHADER);
-    gl.shaderSource(shader, source);
-    gl.compileShader(shader);
+  setShaders() {
+    const vSource = VertexShader;
+    const fSource = FragmentShader;
+    const vShader = this.createVertexShader(vSource);
+    const fShader = this.createFragmentShader(fSource);
+    this.program = this.createProgram(vShader, fShader);
+  }
+
+  imageLoader(callback) {
+    let num = 0;
+    const srcArray = this.images;
+    const arrayNum = srcArray.length;
+
+    srcArray.forEach(src => {
+      const image = new Image();
+      image.src = src;
+      image.onload = () => {
+        num++;
+        if (num === arrayNum) {
+          callback;
+        }
+      };
+    });
+  }
+
+  start() {
+    this.initializeGL();
+  }
+
+  createVertexShader(source) {
+    const shader = this.gl.createShader(this.gl.VERTEX_SHADER);
+    this.gl.shaderSource(shader, source);
+    this.gl.compileShader(shader);
+    return shader;
+  }
+  createFragmentShader(source) {
+    const shader = this.gl.createShader(this.gl.FRAGMENT_SHADER);
+    this.gl.shaderSource(shader, source);
+    this.gl.compileShader(shader);
     return shader;
   }
 
-  function create_fragmentShader(source) {
-    const shader = gl.createShader(gl.FRAGMENT_SHADER);
-    gl.shaderSource(shader, source);
-    gl.compileShader(shader);
-    return shader;
-  }
-
-  function create_program(vs, fs) {
-    const program = gl.createProgram();
-
-    gl.attachShader(program, vs);
-    gl.attachShader(program, fs);
-    gl.linkProgram(program);
-
-    if (gl.getProgramParameter(program, gl.LINK_STATUS)) {
-      gl.useProgram(program);
+  createProgram(vs, fs) {
+    const program = this.gl.createProgram();
+    this.gl.attachShader(program, vs);
+    this.gl.attachShader(program, fs);
+    this.gl.linkProgram(program);
+    if (this.gl.getProgramParameter(program, this.gl.LINK_STATUS)) {
+      this.gl.useProgram(program);
       return program;
     } else {
-      alert(gl.getProgramInfoLog(program));
+      alert(this.gl.getProgramInfoLog(program));
     }
   }
 
-  function create_vbo(data) {
-    const vbo = gl.createBuffer();
+  //   function create_vbo(data) {
+  //   const vbo = gl.createBuffer();
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+  //   gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+  //   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW);
+  //   gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
-    return vbo;
-  }
+  //   return vbo;
+  // }
 
-  function create_ibo(data) {
-    const ibo = gl.createBuffer();
+  // function create_ibo(data) {
+  //   const ibo = gl.createBuffer();
 
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
-    gl.bufferData(
-      gl.ELEMENT_ARRAY_BUFFER,
-      new Int16Array(data),
-      gl.STATIC_DRAW
-    );
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+  //   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
+  //   gl.bufferData(
+  //     gl.ELEMENT_ARRAY_BUFFER,
+  //     new Int16Array(data),
+  //     gl.STATIC_DRAW
+  //   );
+  //   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 
-    return ibo;
-  }
+  //   return ibo;
+  // }
 
-  function set_attribute(vboArray, attLocArray, attStride) {
-    for (let i in vboArray) {
-      gl.bindBuffer(gl.ARRAY_BUFFER, vboArray[i]);
-      gl.enableVertexAttribArray(attLocArray[i]);
-      gl.vertexAttribPointer(
-        attLocArray[i],
-        attStride[i],
-        gl.FLOAT,
-        false,
-        0,
-        0
-      );
-    }
-  }
+  // function set_attribute(vboArray, attLocArray, attStride) {
+  //   for (let i in vboArray) {
+  //     gl.bindBuffer(gl.ARRAY_BUFFER, vboArray[i]);
+  //     gl.enableVertexAttribArray(attLocArray[i]);
+  //     gl.vertexAttribPointer(
+  //       attLocArray[i],
+  //       attStride[i],
+  //       gl.FLOAT,
+  //       false,
+  //       0,
+  //       0
+  //     );
+  //   }
+  // }
 
-  function create_texture(source, number) {
-    const img = new Image();
+  // function create_texture(source, number) {
+  //   const img = new Image();
 
-    img.onload = function() {
-      const _texture = gl.createTexture();
-      gl.bindTexture(gl.TEXTURE_2D, _texture);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-      gl.generateMipmap(gl.TEXTURE_2D);
-      gl.bindTexture(gl.TEXTURE_2D, null);
-      switch (number) {
-        case 0:
-          texture0 = _texture;
-          break;
-        case 1:
-          texture1 = _texture;
-          break;
-        default:
-          break;
-      }
-    };
+  //   img.onload = function () {
+  //     const _texture = gl.createTexture();
+  //     gl.bindTexture(gl.TEXTURE_2D, _texture);
+  //     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+  //     gl.generateMipmap(gl.TEXTURE_2D);
+  //     gl.bindTexture(gl.TEXTURE_2D, null);
+  //     switch (number) {
+  //       case 0:
+  //         texture0 = _texture;
+  //         break;
+  //       case 1:
+  //         texture1 = _texture;
+  //         break;
+  //       case 2:
+  //         dispTexture = _texture;
+  //         break;
+  //       default:
+  //         break;
+  //     }
+  //   };
 
-    img.src = source;
-  }
+  //   img.src = source;
+  // }
 }

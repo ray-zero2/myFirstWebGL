@@ -8,6 +8,7 @@ export default function(selector) {
   canvas.height = 300;
 
   const gl = canvas.getContext('webgl');
+
   // canvasを初期化する色を設定する
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
@@ -16,6 +17,7 @@ export default function(selector) {
 
   // canvasを初期化
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
   //shaderの作成
   const vSource = VertexShader;
   const fSource = FragmentShader;
