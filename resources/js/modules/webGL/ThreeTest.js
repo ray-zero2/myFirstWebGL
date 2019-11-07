@@ -2,22 +2,21 @@ import VertexShader from './shaders/VertexShader.vert';
 import FragmentShader from './shaders/FragmentShader.frag';
 
 let Scene,
-OrthographicCamera,
-WebGLRenderer,
-TextureLoader,
-ShaderMaterial,
-PlaneBufferGeometry,
-Mesh,
-RepeatWrapping,
-LinearFilter;
+  OrthographicCamera,
+  WebGLRenderer,
+  TextureLoader,
+  ShaderMaterial,
+  PlaneBufferGeometry,
+  Mesh,
+  RepeatWrapping,
+  LinearFilter;
 
 export default class ThreeTest {
-  constructor(selector) {
-    const canvas = document.querySelector(selector);
-
-    canvas.width = 1838;
-    canvas.height = 1742;
-    this.images = ['/Users/rei.matsuda/Pictures/img/image_kv.png'];
+  constructor() {
+    this.$ = document.querySelector('.canvasWrapper');
+    this.width = 1838;
+    this.height = 1742;
+    // this.images = ['/Users/rei.matsuda/Pictures/img/image_kv.png'];
     this.isOldBrowser = /msie|trident/.test(navigator.userAgent.toLowerCase);
     if (!this.isOldBrowser) this.loadThree();
   }
@@ -49,5 +48,26 @@ export default class ThreeTest {
     });
   }
 
+  init() {
+    this.scene = new Scene();
+
+    this.renderer = new WebGLRenderer({
+      antialias: false,
+      alpha: true,
+    })
+
+    this.renderer.setClearColor(0x000000, 0.0);
+    this.renderer.setSize(1838, 1742);
+    this.$.appendChild(this.renderer.domElement);
+    this.camera = new OrthographicCamera(
+      this.width / -2,
+      this.width / 2,
+      this.height / 2,
+      this.height / -2,
+      1,
+      1000,
+    );
+    this.camera.position.z = 1;
+  }
 
 }
