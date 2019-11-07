@@ -1,24 +1,66 @@
-import VertexShader from './shaders/distortion/VertexShader.vert';
-import FragmentShader from './shaders/distortion/FragmentShader.frag';
-import vertices from './vertices';
+import VertexShader from './shaders/VertexShader.vert';
+import FragmentShader from './shaders/FragmentShader.frag';
 
 import anime from 'animejs';
 
 export default class {
   constructor(selector) {
     const canvas = document.querySelector(selector);
-    canvas.width = 500;
-    canvas.height = 500;
 
+    canvas.width = 1838;
+    canvas.height = 1742;
     this.isOldBrowser = /msie|trident/.test(navigator.userAgent.toLowerCase);
-    this.images = ['./images/image1.jpg'];
+    this.images = ['/Users/rei.matsuda/Pictures/img/image_kv.png'];
     this.program = null;
-    this.vertices = new Float32Array(vertices);
+    this.vbo = null;
+    this.attributeLocation = null;
+    this.uniformLocation = null;
+    this.texture = null;
+    this.vertices = new Float32Array([
+      -1,
+      -1,
+      1,
+      -1,
+      -1,
+      1,
+      1,
+      -1,
+      -1,
+      1,
+      1,
+      1
+    ]);
 
     if (this.isOldBrowser === false) {
       this.gl = canvas.getContext('webgl');
       this.imageLoader(this.start());
     }
+
+    this.bind(canvas);
+  }
+
+  bind(canvas) {
+    window.addEventListener('resize', () => {
+      const width = window.innerWidth;
+      if (width > 960) {
+        console.log('pc');
+        canvas.width = 1838;
+        canvas.height = 1742;
+      } else {
+        console.log('sp');
+      }
+    });
+  }
+
+  render() {
+    this.gl.clearColor(0.0, 0.0, 0.0, 0.2);
+    this.gl.clearDepth(1.0);
+    this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+    this.gl.activeTexture(this.gl.TEXTURE0);
+    this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
+    this.gl.uniform1i(this.uniformLocation, 0);
+    this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
+    this.gl.flush();
   }
 
   initializeGL() {
@@ -26,6 +68,11 @@ export default class {
     this.gl.clearDepth(1.0);
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
     this.setShaders();
+    this.vbo = this.createVbo(this.vertices);
+    this.setAttribute(this.vbo);
+    this.uniformLocation = this.gl.getUniformLocation(this.program, 'texture');
+    this.setTexture(this.images[0]);
+    this.render();
   }
 
   setShaders() {
@@ -57,6 +104,19 @@ export default class {
     this.initializeGL();
   }
 
+  setAttribute(vbo) {
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, vbo);
+    this.gl.enableVertexAttribArray(this.attributeLocation);
+    this.gl.vertexAttribPointer(
+      this.attributeLocation,
+      2,
+      this.gl.FLOAT,
+      false,
+      0,
+      0
+    );
+  }
+
   createVertexShader(source) {
     const shader = this.gl.createShader(this.gl.VERTEX_SHADER);
     this.gl.shaderSource(shader, source);
@@ -83,69 +143,34 @@ export default class {
     }
   }
 
-  //   function create_vbo(data) {
-  //   const vbo = gl.createBuffer();
+  createVbo(data) {
+    const vbo = this.gl.createBuffer();
 
-  //   gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
-  //   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW);
-  //   gl.bindBuffer(gl.ARRAY_BUFFER, null);
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, vbo);
+    this.gl.bufferData(this.gl.ARRAY_BUFFER, data, this.gl.STATIC_DRAW);
+    this.attributeLocation = this.gl.getAttribLocation(
+      this.program,
+      'position'
+    );
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
 
-  //   return vbo;
-  // }
+    return vbo;
+  }
 
-  // function create_ibo(data) {
-  //   const ibo = gl.createBuffer();
-
-  //   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
-  //   gl.bufferData(
-  //     gl.ELEMENT_ARRAY_BUFFER,
-  //     new Int16Array(data),
-  //     gl.STATIC_DRAW
-  //   );
-  //   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
-
-  //   return ibo;
-  // }
-
-  // function set_attribute(vboArray, attLocArray, attStride) {
-  //   for (let i in vboArray) {
-  //     gl.bindBuffer(gl.ARRAY_BUFFER, vboArray[i]);
-  //     gl.enableVertexAttribArray(attLocArray[i]);
-  //     gl.vertexAttribPointer(
-  //       attLocArray[i],
-  //       attStride[i],
-  //       gl.FLOAT,
-  //       false,
-  //       0,
-  //       0
-  //     );
-  //   }
-  // }
-
-  // function create_texture(source, number) {
-  //   const img = new Image();
-
-  //   img.onload = function () {
-  //     const _texture = gl.createTexture();
-  //     gl.bindTexture(gl.TEXTURE_2D, _texture);
-  //     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-  //     gl.generateMipmap(gl.TEXTURE_2D);
-  //     gl.bindTexture(gl.TEXTURE_2D, null);
-  //     switch (number) {
-  //       case 0:
-  //         texture0 = _texture;
-  //         break;
-  //       case 1:
-  //         texture1 = _texture;
-  //         break;
-  //       case 2:
-  //         dispTexture = _texture;
-  //         break;
-  //       default:
-  //         break;
-  //     }
-  //   };
-
-  //   img.src = source;
-  // }
+  setTexture(source) {
+    const img = new Image();
+    img.src = source;
+    this.texture = this.gl.createTexture();
+    this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
+    this.gl.texImage2D(
+      this.gl.TEXTURE_2D,
+      0,
+      this.gl.RGBA,
+      this.gl.RGBA,
+      this.gl.UNSIGNED_BYTE,
+      img
+    );
+    this.gl.generateMipmap(this.gl.TEXTURE_2D);
+    this.gl.bindTexture(this.gl.TEXTURE_2D, null);
+  }
 }
